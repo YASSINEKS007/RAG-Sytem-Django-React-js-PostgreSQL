@@ -1,25 +1,86 @@
 import SendIcon from "@mui/icons-material/Send";
-import Divider from "@mui/material/Divider";
-import Fab from "@mui/material/Fab";
-import Grid from "@mui/material/Grid";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import Paper from "@mui/material/Paper";
-import TextField from "@mui/material/TextField";
-import { useState } from "react";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
+import {
+  Box,
+  Divider,
+  Grid,
+  List,
+  Paper,
+  TextField,
+  Tooltip,
+} from "@mui/material";
+import { useEffect, useRef, useState } from "react";
 import Conversation from "../components/Conversation";
 import PdfDetails from "../components/PdfDetails";
 import SearchBar from "../components/SearchBar";
+import SnackBar from "../components/SnackBar";
 import UserDetails from "../components/UserDetails";
+import api from "../services/api";
 
 const ChatPage = () => {
+  const [file, setFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+  const [snackBarOpen, setSnackBarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [pdfs, setPdfs] = useState([
-    { id: 1, name: "Document1.pdf", size: "1" },
-    { id: 2, name: "Document2.pdf", size: "2" },
-    { id: 3, name: "Report3.pdf", size: "3" },
-  ]);
+  const [pdfs, setPdfs] = useState([]);
+
+  const handleFileUpload = async (event) => {
+    const selectedFile = event.target.files[0];
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      const response = await api.post("/app/upload/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Accept: "application/json",
+        },
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        setSnackBarOpen(true);
+      } else {
+        console.error(
+          "Error uploading file:",
+          response.status,
+          response.statusText
+        );
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    } finally {
+      setIsUploading(false);
+      setFile(null);
+    }
+  };
+
+  useEffect(() => {
+    const getFilesDetails = async () => {
+      try {
+        const response = await api.get("/app/files/");
+        setPdfs(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.log("Error fetching file details:", error);
+      }
+    };
+
+    getFilesDetails();
+  }, []);
+
+
+  const handleSnackBarClose = () => {
+    setSnackBarOpen(false);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current.click();
+  };
 
   const handleSearchChange = (query) => {
     setSearchQuery(query);
@@ -27,18 +88,12 @@ const ChatPage = () => {
 
   const getCurrentTime = () => {
     const now = new Date();
-
     let hours = now.getHours();
     let minutes = now.getMinutes();
-
-    // Add leading zero to minutes and hours if needed
     hours = hours < 10 ? "0" + hours : hours;
     minutes = minutes < 10 ? "0" + minutes : minutes;
-
     return `${hours}:${minutes}`;
   };
-
-  console.log(getCurrentTime());
 
   return (
     <Grid
@@ -67,6 +122,7 @@ const ChatPage = () => {
         >
           <UserDetails />
           <Divider />
+
           <SearchBar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
@@ -94,8 +150,6 @@ const ChatPage = () => {
               time={getCurrentTime()}
               position={"right"}
             />
-
-            
             <Conversation
               text={"Hello bro?"}
               time={getCurrentTime()}
@@ -118,16 +172,54 @@ const ChatPage = () => {
               />
             </Grid>
             <Grid
+              item
               xs={1}
-              align="right"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              <Fab aria-label="send">
-                <SendIcon />
-              </Fab>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 1,
+                  marginLeft: "10px",
+                }}
+              >
+                <Tooltip
+                  title="Upload a file"
+                  arrow
+                >
+                  <UploadFileOutlinedIcon
+                    fontSize="large"
+                    sx={{ cursor: "pointer" }}
+                    onClick={triggerFileInput}
+                  />
+                </Tooltip>
+                <Tooltip
+                  title="Send a message"
+                  arrow
+                >
+                  <SendIcon fontSize="large" />
+                </Tooltip>
+                <input
+                  type="file"
+                  hidden
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                />
+              </Box>
             </Grid>
           </Grid>
         </Grid>
       </Grid>
+      <SnackBar
+        open={snackBarOpen}
+        onClose={handleSnackBarClose}
+      />
     </Grid>
   );
 };

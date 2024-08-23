@@ -7,12 +7,12 @@ const PdfDetails = ({ pdfs, searchQuery }) => {
     pdf.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const formattedSize = (size) => `${size} MB`;
+  const formattedSize = (size) => `${(size / (1024 * 1024)).toFixed(2)} MB`;
 
   return (
     <div>
-      {filteredPDFs.map((pdf) => (
-        <List>
+      {filteredPDFs.map((pdf, key) => (
+        <List key={key}>
           <ListItem key={pdf.name}>
             <ListItemText primary={pdf.name} />
             <ListItemText
@@ -22,8 +22,8 @@ const PdfDetails = ({ pdfs, searchQuery }) => {
           </ListItem>
         </List>
       ))}
-      ;
     </div>
   );
 };
+
 export default PdfDetails;
