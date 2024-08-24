@@ -26,6 +26,23 @@ const ChatPage = () => {
   const [pdfs, setPdfs] = useState([]);
   const [type, setType] = useState(null);
   const [text, setText] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
+
+  const getChatHistory = async () => {
+    try {
+      const response = await api.get("/app/chat-history/");
+      const data = response.data["chat history"];
+      setChatHistory(data);
+    } catch {
+      setType("error");
+      setText("An Error Occured! Please Try Again Later");
+      setSnackBarOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    getChatHistory();
+  }, []);
 
   const handleFileUpload = async (event) => {
     const selectedFile = event.target.files[0];
@@ -91,15 +108,6 @@ const ChatPage = () => {
     setSearchQuery(query);
   };
 
-  const getCurrentTime = () => {
-    const now = new Date();
-    let hours = now.getHours();
-    let minutes = now.getMinutes();
-    hours = hours < 10 ? "0" + hours : hours;
-    minutes = minutes < 10 ? "0" + minutes : minutes;
-    return `${hours}:${minutes}`;
-  };
-
   return (
     <Grid
       container
@@ -127,7 +135,6 @@ const ChatPage = () => {
         >
           <UserDetails />
           <Divider />
-
           <SearchBar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
@@ -150,16 +157,20 @@ const ChatPage = () => {
               overflowY: "auto",
             }}
           >
-            <Conversation
-              text={"Hello bro?"}
-              time={getCurrentTime()}
-              position={"right"}
-            />
-            <Conversation
-              text={"Hello bro?"}
-              time={getCurrentTime()}
-              position={"left"}
-            />
+            {chatHistory.map((chat, index) => (
+              <div key={index}>
+                <Conversation
+                  text={chat.question}
+                  time={chat.question_timestamp}
+                  position={"right"}
+                />
+                <Conversation
+                  text={chat.answer}
+                  time={chat.answer_timestamp}
+                  position={"left"}
+                />
+              </div>
+            ))}
           </List>
           <Divider sx={{ marginTop: "30px" }} />
           <Grid

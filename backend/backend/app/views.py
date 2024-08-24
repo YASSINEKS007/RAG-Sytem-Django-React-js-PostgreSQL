@@ -1,24 +1,25 @@
 import os
 
 from django.conf import settings
+from langchain.chains import RetrievalQA
+from langchain.chains.combine_documents.stuff import StuffDocumentsChain
+from langchain.chains.llm import LLMChain
+from langchain.prompts import PromptTemplate
+from langchain.vectorstores.pgvector import DistanceStrategy
+from langchain_community.document_loaders import PDFPlumberLoader
+from langchain_community.llms import Ollama
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_postgres import PGVector
+from langchain_postgres.vectorstores import PGVector
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-import os
-from langchain_community.document_loaders import PDFPlumberLoader
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.vectorstores.pgvector import DistanceStrategy
-from langchain_postgres.vectorstores import PGVector
-from langchain_community.llms import Ollama
-from langchain.chains import RetrievalQA
-from langchain.chains.llm import LLMChain
-from langchain.chains.combine_documents.stuff import StuffDocumentsChain
-from langchain.prompts import PromptTemplate
-from langchain_postgres import PGVector
-from langchain_postgres.vectorstores import PGVector
+from django.utils import timezone
 
+
+from .models import ChatHistory
 
 CONNECTION_STRING = f"postgresql+psycopg://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
 embeddings = HuggingFaceEmbeddings()
@@ -122,6 +123,8 @@ def search_query(request):
         return Response(
             {"error": "No query provided"}, status=status.HTTP_400_BAD_REQUEST
         )
+        
+    chat_history = ChatHistory.objects.create(question=query)
 
     retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
     qa = RetrievalQA(
@@ -134,8 +137,29 @@ def search_query(request):
     response = qa({"query": query})
     answer = response.get("result", "No answer found")
     print("Answer:", answer)
+    
+    chat_history.answer = answer
+    chat_history.answer_timestamp = timezone.now()
+    chat_history.save()
 
     if answer:
         return Response({"answer": answer}, status=status.HTTP_200_OK)
 
     return Response({"error": "No results found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_chat_history(request):
+    chats = ChatHistory.objects.all().order_by('-question_timestamp')
+    chat_history = [
+        {
+            "question": chat.question,
+            "question_timestamp": chat.question_timestamp,
+            "answer": chat.answer,
+            "answer_timestamp": chat.answer_timestamp,
+        }
+        for chat in chats
+    ]
+
+    return Response({"chat history": chat_history}, status=status.HTTP_200_OK)
