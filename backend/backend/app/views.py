@@ -136,7 +136,6 @@ def search_query(request):
 
     response = qa({"query": query})
     answer = response.get("result", "No answer found")
-    print("Answer:", answer)
     
     chat_history.answer = answer
     chat_history.answer_timestamp = timezone.now()
