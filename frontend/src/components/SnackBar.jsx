@@ -1,7 +1,7 @@
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
-const SnackBar = ({ open, onClose }) => {
+const SnackBar = ({ open, onClose, type, text }) => {
   return (
     <Snackbar
       open={open}
@@ -10,11 +10,11 @@ const SnackBar = ({ open, onClose }) => {
     >
       <Alert
         onClose={onClose}
-        severity="success"
+        severity={type}
         variant="filled"
         sx={{ width: "100%" }}
       >
-        File uploaded successfully
+        {text}
       </Alert>
     </Snackbar>
   );

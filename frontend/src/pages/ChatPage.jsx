@@ -24,6 +24,8 @@ const ChatPage = () => {
   const [snackBarOpen, setSnackBarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pdfs, setPdfs] = useState([]);
+  const [type, setType] = useState(null);
+  const [text, setText] = useState(null);
 
   const handleFileUpload = async (event) => {
     const selectedFile = event.target.files[0];
@@ -43,7 +45,10 @@ const ChatPage = () => {
       });
 
       if (response.status === 200 || response.status === 201) {
+        setType("success");
+        setText("File uploaded successfully");
         setSnackBarOpen(true);
+        getFilesDetails();
       } else {
         console.error(
           "Error uploading file:",
@@ -51,8 +56,10 @@ const ChatPage = () => {
           response.statusText
         );
       }
-    } catch (error) {
-      console.error("Error uploading file:", error);
+    } catch {
+      setType("error");
+      setText("Error Uploading File! Please Try again Later!!");
+      setSnackBarOpen(true);
     } finally {
       setIsUploading(false);
       setFile(null);
@@ -60,19 +67,17 @@ const ChatPage = () => {
   };
 
   useEffect(() => {
-    const getFilesDetails = async () => {
-      try {
-        const response = await api.get("/app/files/");
-        setPdfs(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.log("Error fetching file details:", error);
-      }
-    };
-
     getFilesDetails();
   }, []);
 
+  const getFilesDetails = async () => {
+    try {
+      const response = await api.get("/app/files/");
+      setPdfs(response.data);
+    } catch (error) {
+      console.log("Error fetching file details:", error);
+    }
+  };
 
   const handleSnackBarClose = () => {
     setSnackBarOpen(false);
@@ -219,6 +224,8 @@ const ChatPage = () => {
       <SnackBar
         open={snackBarOpen}
         onClose={handleSnackBarClose}
+        type={type}
+        text={text}
       />
     </Grid>
   );
