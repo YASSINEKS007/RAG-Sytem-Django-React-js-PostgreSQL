@@ -15,6 +15,7 @@ import UserDetails from "../components/UserDetails";
 import api from "../services/api";
 import { Paper } from "@mui/material";
 import TypingIndicator from "../components/TypingIcon";
+import LoadingPopUp from "../components/LoadingPopUp";
 
 const ChatPage = () => {
   const [file, setFile] = useState(null);
@@ -57,7 +58,7 @@ const ChatPage = () => {
         answer_timestamp: "null",
       };
       setChatHistory([...chatHistory, newChat]);
-      setQuery2(query)
+      setQuery2(query);
       setQuery("");
 
       await api.get(`/app/response/?query=${query}`);
@@ -141,130 +142,133 @@ const ChatPage = () => {
   };
 
   return (
-    <Grid
-      container
-      sx={{ height: "100vh", width: "100vw", backgroundColor: "#333" }}
-    >
+    <>
+      {isUploading && <LoadingPopUp />}
       <Grid
         container
-        component={Paper}
-        sx={{ width: "100%", height: "100%" }}
+        sx={{ height: "100vh", width: "100vw", backgroundColor: "#333" }}
       >
         <Grid
-          item
-          xs={3}
-          sx={{ borderRight: "1px solid #e0e0e0", height: "100%" }}
+          container
+          component={Paper}
+          sx={{ width: "100%", height: "100%" }}
         >
-          <UserDetails />
-          <Divider />
-          <SearchBar
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-          />
-          <PdfDetails
-            pdfs={pdfs}
-            searchQuery={searchQuery}
-          />
-        </Grid>
-
-        <Grid
-          item
-          xs={9}
-          sx={{ height: "100vh" }}
-        >
-          <List sx={{ height: "75vh", overflowY: "auto" }}>
-            {chatHistory.map((chat, index) => (
-              <div key={index}>
-                <Conversation
-                  text={chat.question}
-                  time={chat.question_timestamp}
-                  position={"right"}
-                />
-                {chat.answer !== "null" ? (
-                  <Conversation
-                    text={chat.answer}
-                    time={chat.answer_timestamp}
-                    position={"left"}
-                  />
-                ) : (
-                  showTyping && <TypingIndicator />
-                )}
-              </div>
-            ))}
-          </List>
-          <Divider sx={{ marginTop: "30px" }} />
           <Grid
-            container
-            sx={{ padding: "20px" }}
+            item
+            xs={3}
+            sx={{ borderRight: "1px solid #e0e0e0", height: "100%" }}
           >
+            <UserDetails />
+            <Divider />
+            <SearchBar
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+            />
+            <PdfDetails
+              pdfs={pdfs}
+              searchQuery={searchQuery}
+            />
+          </Grid>
+
+          <Grid
+            item
+            xs={9}
+            sx={{ height: "100vh" }}
+          >
+            <List sx={{ height: "75vh", overflowY: "auto" }}>
+              {chatHistory.map((chat, index) => (
+                <div key={index}>
+                  <Conversation
+                    text={chat.question}
+                    time={chat.question_timestamp}
+                    position={"right"}
+                  />
+                  {chat.answer !== "null" ? (
+                    <Conversation
+                      text={chat.answer}
+                      time={chat.answer_timestamp}
+                      position={"left"}
+                    />
+                  ) : (
+                    showTyping && <TypingIndicator />
+                  )}
+                </div>
+              ))}
+            </List>
+            <Divider sx={{ marginTop: "30px" }} />
             <Grid
-              item
-              xs={11}
+              container
+              sx={{ padding: "20px" }}
             >
-              <TextField
-                id="outlined-basic-message"
-                label="Type Something"
-                fullWidth
-                value={query}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid
-              item
-              xs={1}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Box
+              <Grid
+                item
+                xs={11}
+              >
+                <TextField
+                  id="outlined-basic-message"
+                  label="Type Something"
+                  fullWidth
+                  value={query}
+                  onChange={handleChange}
+                />
+              </Grid>
+              <Grid
+                item
+                xs={1}
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 1,
-                  marginLeft: "10px",
                 }}
               >
-                <Tooltip
-                  title="Upload a file"
-                  arrow
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 1,
+                    marginLeft: "10px",
+                  }}
                 >
-                  <UploadFileOutlinedIcon
-                    fontSize="large"
-                    sx={{ cursor: "pointer" }}
-                    onClick={triggerFileInput}
+                  <Tooltip
+                    title="Upload a file"
+                    arrow
+                  >
+                    <UploadFileOutlinedIcon
+                      fontSize="large"
+                      sx={{ cursor: "pointer" }}
+                      onClick={triggerFileInput}
+                    />
+                  </Tooltip>
+                  <Tooltip
+                    title="Send a message"
+                    arrow
+                  >
+                    <SendIcon
+                      fontSize="large"
+                      onClick={sendQuery}
+                      sx={{ cursor: "pointer" }}
+                    />
+                  </Tooltip>
+                  <input
+                    type="file"
+                    hidden
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
                   />
-                </Tooltip>
-                <Tooltip
-                  title="Send a message"
-                  arrow
-                >
-                  <SendIcon
-                    fontSize="large"
-                    onClick={sendQuery}
-                    sx={{ cursor: "pointer" }}
-                  />
-                </Tooltip>
-                <input
-                  type="file"
-                  hidden
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                />
-              </Box>
+                </Box>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
+        <SnackBar
+          open={snackBarOpen}
+          onClose={handleSnackBarClose}
+          type={type}
+          text={text}
+        />
       </Grid>
-      <SnackBar
-        open={snackBarOpen}
-        onClose={handleSnackBarClose}
-        type={type}
-        text={text}
-      />
-    </Grid>
+    </>
   );
 };
 

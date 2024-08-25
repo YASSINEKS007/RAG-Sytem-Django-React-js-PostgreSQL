@@ -5,7 +5,6 @@ from langchain.chains import RetrievalQA
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains.llm import LLMChain
 from langchain.prompts import PromptTemplate
-from langchain.vectorstores.pgvector import DistanceStrategy
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_community.llms import Ollama
 from langchain_experimental.text_splitter import SemanticChunker
@@ -117,7 +116,6 @@ def upload_file(request):
 @permission_classes([AllowAny])
 def search_query(request):
     query = request.GET.get("query", "")
-    print("query is : ", query)
 
     if not query:
         return Response(
