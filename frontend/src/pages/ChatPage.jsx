@@ -95,16 +95,15 @@ const ChatPage = () => {
         setText("File uploaded successfully");
         setSnackBarOpen(true);
         getFilesDetails();
-      } else {
-        console.error(
-          "Error uploading file:",
-          response.status,
-          response.statusText
-        );
       }
-    } catch {
-      setType("error");
-      setText("Error Uploading File! Please Try Again Later!");
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setType("warning");
+        setText("File Already exists");
+      } else {
+        setType("error");
+        setText("Error Uploading File! Please Try Again Later!");
+      }
       setSnackBarOpen(true);
     } finally {
       setIsUploading(false);
@@ -120,8 +119,9 @@ const ChatPage = () => {
     try {
       const response = await api.get("/app/files/");
       setPdfs(response.data);
-    } catch (error) {
-      console.log("Error fetching file details:", error);
+    } catch {
+      setType("error");
+      setText("Error Fetching files! Please Try Again Later!");
     }
   };
 
@@ -144,19 +144,15 @@ const ChatPage = () => {
   return (
     <>
       {isUploading && <LoadingPopUp />}
-      <Grid
-        container
-        sx={{ height: "100vh", width: "100vw", backgroundColor: "#333" }}
-      >
+      <Grid container>
         <Grid
           container
           component={Paper}
-          sx={{ width: "100%", height: "100%" }}
         >
           <Grid
             item
             xs={3}
-            sx={{ borderRight: "1px solid #e0e0e0", height: "100%" }}
+            style={{ borderRight: "1px solid #ccc" }}
           >
             <UserDetails />
             <Divider />
@@ -173,7 +169,6 @@ const ChatPage = () => {
           <Grid
             item
             xs={9}
-            sx={{ height: "100vh" }}
           >
             <List sx={{ height: "75vh", overflowY: "auto" }}>
               {chatHistory.map((chat, index) => (
@@ -195,7 +190,7 @@ const ChatPage = () => {
                 </div>
               ))}
             </List>
-            <Divider sx={{ marginTop: "30px" }} />
+            <Divider sx={{ marginTop: "48px" }} />
             <Grid
               container
               sx={{ padding: "20px" }}

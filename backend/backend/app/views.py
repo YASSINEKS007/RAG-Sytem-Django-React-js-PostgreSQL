@@ -95,6 +95,11 @@ def upload_file(request):
     file_name = uploaded_file.name
     file_path = os.path.join(settings.MEDIA_ROOT, "uploads", file_name)
 
+    if os.path.exists(file_path):
+        return Response(
+            {"error": "File already exists"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
     with open(file_path, "wb+") as destination:
         for chunk in uploaded_file.chunks():
             destination.write(chunk)
@@ -121,10 +126,12 @@ def search_query(request):
         return Response(
             {"error": "No query provided"}, status=status.HTTP_400_BAD_REQUEST
         )
-        
+
     chat_history = ChatHistory.objects.create(question=query)
 
-    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+    retriever = vector_store.as_retriever(
+        search_type="similarity", search_kwargs={"k": 3}
+    )
     qa = RetrievalQA(
         combine_documents_chain=combine_documents_chain,
         verbose=False,
@@ -134,7 +141,7 @@ def search_query(request):
 
     response = qa({"query": query})
     answer = response.get("result", "No answer found")
-    
+
     chat_history.answer = answer
     chat_history.answer_timestamp = timezone.now()
     chat_history.save()
@@ -148,7 +155,7 @@ def search_query(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_chat_history(request):
-    chats = ChatHistory.objects.all().order_by('-question_timestamp')
+    chats = ChatHistory.objects.all().order_by("-question_timestamp")
     chat_history = [
         {
             "question": chat.question,
