@@ -3,19 +3,24 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 
 const Conversation = ({ text, time, position }) => {
-  // Initialize variables
   let formattedTime = "";
   let typing = "typing...";
 
   if (time !== "null") {
     const date = new Date(time);
 
-    const hours = date.getUTCHours();
-    const minutes = date.getUTCMinutes();
+    const day = date.getDate();
+    const month = date.getMonth() + 1; 
+    const year = date.getFullYear();
+    const hours = date.getHours(); 
+    const minutes = date.getMinutes(); 
+
+    const formattedDay = day < 10 ? `0${day}` : day;
+    const formattedMonth = month < 10 ? `0${month}` : month;
     const formattedHours = hours < 10 ? `0${hours}` : hours;
     const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
 
-    formattedTime = `${formattedHours}:${formattedMinutes}`;
+    formattedTime = `${formattedDay}/${formattedMonth}/${year} ${formattedHours}:${formattedMinutes}`;
   } else {
     formattedTime = typing;
   }
